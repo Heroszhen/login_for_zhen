@@ -1,0 +1,28 @@
+@import '~bootstrap-icons/font/bootstrap-icons.css';
+@import "bootstrap/scss/bootstrap";
+
+.pointer {
+    cursor: pointer;
+}
+
+.bi-door-open-fill:hover {
+    color: blue;
+}
+
+.bi-pencil-fill:hover {
+    color: green;
+}
+
+.bi-trash3-fill:hover {
+    color: red;
+}
+
+#app {
+    min-width: 500px;
+}
+
+.alert {
+    padding: 5px 8px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
