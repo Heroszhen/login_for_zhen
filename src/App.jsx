@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import mocks from './mocks.json';//to remove
 
@@ -8,7 +8,12 @@ function App() {
     const [elmIndex, setElmIndex] = useState(null);
     const [dispalyForm, setDispalyForm] = useState(false);
     const [updateAccounts, setUpdateAccounts] = useState(false);
-    const { register, handleSubmit, formState: { errors }, reset } = useForm();
+    const { register, handleSubmit, formState: { errors }, reset, control } = useForm();
+    const nameWatcher = useWatch({
+        control,
+        name: 'name',
+        defaultValue: null
+    });
     
     useEffect(() => {
         (async ()=>{
@@ -36,10 +41,10 @@ function App() {
     const setForm = (index = null) => {
         setElmIndex(index);
         reset({
-            name: index === null ? '' : accounts[index].name,
-            email: index === null ? '' : accounts[index].email,
-            password: index === null ? '' : accounts[index].password,
-            link: index === null ? '' : accounts[index].link
+            name: index === null ? null : accounts[index].name,
+            email: index === null ? null : accounts[index].email,
+            password: index === null ? null : accounts[index].password,
+            link: index === null ? null : accounts[index].link
         });
         setDispalyForm(true);
     }
@@ -64,6 +69,14 @@ function App() {
         setAccounts(accounts.filter((_, i) => i !== index))
     }
 
+    const isNameExisted = () => {
+        for (let index  = 0; index < accounts.length; index++) {
+            if (accounts[index].name === nameWatcher && elmIndex !== index)return true;
+        }
+
+        return false;
+    }
+
     return (
         <div id="app" className="p-3 pb-1">
             {dispalyForm === true &&
@@ -83,6 +96,11 @@ function App() {
                                 {...register("name", { required: { value: true, message: 'Le champ est obligatoire'}})}
                             />
                             {errors.name?.type === 'required' && <div className="alert alert-danger">{errors.name.message}</div>}
+                            {isNameExisted() === true && 
+                                <div className="alert alert-warning">
+                                    Il existe un account avec ce nom
+                                </div>
+                            }
                         </div>
                         <div className="col-6 mb-2">
                             <label for="email" class="form-label">Mail*</label>
@@ -106,7 +124,7 @@ function App() {
                             />
                             {errors.password?.type === 'required' && <div className="alert alert-danger">{errors.password.message}</div>}
                         </div>
-                        <div className="col-6 mb-2">
+                        <div className="col-12 mb-2">
                             <label for="link" class="form-label">Page de login</label>
                             <input 
                                 class="form-control form-control-sm" 
