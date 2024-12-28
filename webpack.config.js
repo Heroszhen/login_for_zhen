@@ -3,10 +3,12 @@ const CopyPlugin = require("copy-webpack-plugin");
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-    entry: './src/main.js',
+    entry: {
+        main: './src/main.js'
+    },
     output: {
         path: path.resolve(__dirname, 'dist/scripts'),
-        filename: 'main.js',
+        filename: '[name].js',
         clean: true,
     },
     module: {
@@ -45,7 +47,9 @@ module.exports = {
                { from: "./public/scripts", to: path.resolve(__dirname, 'dist/scripts') },
                { from: "./public/icons", to: path.resolve(__dirname, 'dist/icons') },
                { from: "./public/index.html", to: path.resolve(__dirname, 'dist/index.html') },
-               { from: "./public/manifest.json", to: path.resolve(__dirname, 'dist/manifest.json') }
+               { from: "./public/manifest.json", to: path.resolve(__dirname, 'dist/manifest.json') },
+               { from: "./node_modules/@unocss/runtime/uno.global.js", to: path.resolve(__dirname, 'dist/scripts/unocss/uno.global.js') },
+               { from: "./src/uno.rules.js", to: path.resolve(__dirname, 'dist/scripts/unocss/uno.rules.js') },
             ],
         }),
         new MiniCssExtractPlugin({

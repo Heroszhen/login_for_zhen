@@ -78,13 +78,13 @@ function App() {
     }
 
     return (
-        <div id="app" className="p-3 pb-1">
+        <div id="app" className="p-3 pb-1 hero-width-500">
             {dispalyForm === true &&
                 <section className="container-fluid mb-3">
                     <form className="row" onSubmit={handleSubmit(onSubmit)}>
                         <div className="col-12 d-flex justify-content-between">
                             <h4>Editer un compter</h4>
-                            <i className="bi bi-x-lg pointer text-danger" onClick={()=>{setDispalyForm(false);setElmIndex(null)}}></i>
+                            <i className="bi bi-x-lg cursor-pointer text-danger" onClick={()=>{setDispalyForm(false);setElmIndex(null)}}></i>
                         </div>
                         <div className="col-12 mb-2">
                             <label for="name" class="form-label">Nom*</label>
@@ -147,7 +147,7 @@ function App() {
                         <tr>
                             <th scope="col">
                                 Site
-                                <i class="bi bi-plus-circle-fill pointer ms-1" onClick={()=>setForm()}></i>
+                                <i class="bi bi-plus-circle-fill cursor-pointer ms-1" onClick={()=>setForm()}></i>
                             </th>
                             <th scope="col">Identifiant</th>
                             <th scope="col">Login</th>
@@ -163,11 +163,11 @@ function App() {
                                     </th>
                                     <td>{account.email}</td>
                                     <td>
-                                        <i className="bi bi-door-open-fill pointer"></i>
+                                        <i className="bi bi-door-open-fill cursor-pointer hover:color-blue"></i>
                                     </td>
                                     <td>
-                                        <i className="bi bi-pencil-fill pointer me-3" onClick={()=>setForm(index)}></i>
-                                        <i className="bi bi-trash3-fill pointer" onClick={()=>deleteAccount(index)}></i>
+                                        <i className="bi bi-pencil-fill cursor-pointer me-3 hover:color-green" onClick={()=>setForm(index)}></i>
+                                        <i className="bi bi-trash3-fill cursor-pointer hover:color-red" onClick={()=>deleteAccount(index)}></i>
                                     </td>
                                 </tr>
                             ))
