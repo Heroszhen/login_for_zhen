@@ -1,20 +1,44 @@
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.login) {
-        // if (request.login.type === 'bdd') {
-        //     const formDom = document.querySelector('form#login_form');
-        //     if (formDom) {
-        //         formDom.querySelector("input#serverNameInput").value = request.login.server;
-        //         formDom.querySelector("input#input_username").value = request.login.username;
-        //         formDom.querySelector("[type='password']").value = request.login.password;
-        //         formDom.querySelector("input[type='submit']").click();
-        //     }
-        // } else {
-        //     const formDom = document.querySelector('form');
-        //     if
-        //     formDom.querySelector("[type='email']").value = request.login.username;
-        //     formDom.querySelector("[type='password']").value = request.login.password;
-        //     formDom.querySelector("button[type='submit']").click();
-        // }   
+    if (request.action === "navigate") {
+        window.open(request.data, "_blank");
     }
+
+    if (request.action === "login") {
+        const form = document.querySelector('form');
+
+        const emailField = searchDom(form, ['email', 'login', 'username']);
+        if(emailField)emailField.value = request.data.email;
+
+        const passwordField = searchDom(form, ['password']);
+        if(passwordField)passwordField.value = request.data.password;
+
+        const btn = searchDom(form, ['submit'], false)
+        btn?.click();
+    }
+   
     sendResponse({"result": true});
 })
+
+/**
+ * 
+ * @param {HTMLFormElement | null} parentDom 
+ * @param {Array} keywords 
+ * @param {boolean} [isInput=true] isInput
+ * @returns {HTMLElement | null}
+ */
+function searchDom(parentDom, keywords, isInput = true) {
+    if (parentDom === null)parentDom.querySelector('body');
+
+    const attributes = ['type', 'id', 'name', 'role'];
+    let elements, query;
+    for(let entry of keywords) {
+        for (let attribute of attributes) {
+            query = `[${attribute}*=${entry}]`;
+            if (isInput)query = 'input' + query;
+            elements = parentDom.querySelectorAll(query);
+            if (elements.length > 0)return elements[0];
+        }
+    }
+
+    return null;
+}

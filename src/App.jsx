@@ -1,8 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import { useForm, useWatch } from "react-hook-form";
 
-import mocks from './mocks.json';//to remove
-
 function App() {
     const [accounts, setAccounts] = useState([]);
     const [elmIndex, setElmIndex] = useState(null);
@@ -17,9 +15,6 @@ function App() {
     
     useEffect(() => {
         (async ()=>{
-            //to remove
-            await chrome.storage.local.set({'login': mocks});
-
             await getAccounts();
         })();
     }, []);
@@ -65,6 +60,9 @@ function App() {
 
     const deleteAccount = (index) => {
         if (index === elmIndex)return;
+
+        if (!window.confirm("Voulez-vous supprimer ce compte?"))return;
+
         setUpdateAccounts(true);
         setAccounts(accounts.filter((_, i) => i !== index))
     }
@@ -73,8 +71,23 @@ function App() {
         for (let index  = 0; index < accounts.length; index++) {
             if (accounts[index].name === nameWatcher && elmIndex !== index)return true;
         }
-
         return false;
+    }
+
+    const navigateToUrl = async (index) => {
+        const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+        const response = await chrome.tabs.sendMessage(tab.id, {
+            action: "navigate",
+            data: accounts[index].link
+        });
+    }
+
+    const doLogin = async (index) => {
+        const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+        const response = await chrome.tabs.sendMessage(tab.id, {
+            action: "login",
+            data: accounts[index]
+        });
     }
 
     return (
@@ -159,11 +172,18 @@ function App() {
                             accounts.map((account, index) => (
                                 <tr key={index}>
                                     <th scope="row">
-                                        <span className={account.link !== '' ? 'btn btn-link' : ''}>{account.name}</span>
+                                        {account.link === null
+                                            ?<span>{account.name}</span>
+                                            :<span 
+                                                className="btn btn-link"  
+                                                onClick={()=>navigateToUrl(index)}>
+                                                    {account.name}
+                                             </span>
+                                        }
                                     </th>
                                     <td>{account.email}</td>
                                     <td>
-                                        <i className="bi bi-door-open-fill cursor-pointer hover:color-blue"></i>
+                                        <i className="bi bi-door-open-fill cursor-pointer hover:color-blue" onClick={()=>doLogin(index)}></i>
                                     </td>
                                     <td>
                                         <i className="bi bi-pencil-fill cursor-pointer me-3 hover:color-green" onClick={()=>setForm(index)}></i>
