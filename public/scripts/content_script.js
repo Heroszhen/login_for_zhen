@@ -1,19 +1,17 @@
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.action === "navigate") {
-        window.open(request.data, "_blank");
-    }
-
     if (request.action === "login") {
-        const form = document.querySelector('form');
-
-        const emailField = searchDom(form, ['email', 'login', 'username']);
-        if(emailField)emailField.value = request.data.email;
-
-        const passwordField = searchDom(form, ['password']);
-        if(passwordField)passwordField.value = request.data.password;
-
-        const btn = searchDom(form, ['submit'], false)
-        btn?.click();
+        let form = document.querySelector('form#login_form');
+        if (form) {
+            searchDom(form, ['serverNameInput'], request.data.server);
+            searchDom(form, ['input_username'], request.data.email);
+            searchDom(form, ['input_password'], request.data.password);
+            searchDom(form, ['submit'], null, true)?.click();
+        } else {
+            form = document.querySelector('form');
+            searchDom(form, ['email', 'login', 'username'], request.data.email);
+            searchDom(form, ['password'], request.data.password);
+            searchDom(form, ['submit'], null, false)?.click()
+        }
     }
    
     sendResponse({"result": true});
@@ -23,10 +21,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
  * 
  * @param {HTMLFormElement | null} parentDom 
  * @param {Array} keywords 
+ * @param {string} [isInput=null] value
  * @param {boolean} [isInput=true] isInput
  * @returns {HTMLElement | null}
  */
-function searchDom(parentDom, keywords, isInput = true) {
+function searchDom(parentDom, keywords, value = null, isInput = true) {
     if (parentDom === null)parentDom.querySelector('body');
 
     const attributes = ['type', 'id', 'name', 'role'];
@@ -36,7 +35,11 @@ function searchDom(parentDom, keywords, isInput = true) {
             query = `[${attribute}*=${entry}]`;
             if (isInput)query = 'input' + query;
             elements = parentDom.querySelectorAll(query);
-            if (elements.length > 0)return elements[0];
+            if (elements.length > 0) {
+                const dom = elements[0];
+                if (value !== null)dom.value = value;
+                return dom;
+            }
         }
     }
 

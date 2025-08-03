@@ -1,13 +1,14 @@
+export const headers = ['id', 'name', 'server', 'email', 'password', 'link'];
+
 /** 
  * @param {File} file 
  * @returns {Promise<array>}
  */
-export function readCsv(file) {
+export function readCSV(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = (event) => {
-            const content = event.target.result.split('\n');
-            resolve(content);
+            resolve(event.target.result);
         }
         reader.readAsText(file)
     });   
@@ -18,7 +19,7 @@ export function readCsv(file) {
  * @param {string|null} filename
  * @returns {void}
  */
-export function createCsv(data, filename = null) {
+export function createCSV(data, filename = null) {
     const aTag = document.createElement('a');
     const blob = new Blob(['\uFEFF', data], {type: 'text/csv'});
     aTag.download = filename ?? "file.csv";

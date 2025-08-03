@@ -1,17 +1,18 @@
 import React, {useState, useEffect} from 'react';
-import { useForm, useWatch } from "react-hook-form";
+import { createCSV, headers } from './util.js';
+import EditForm from './components/edit_form/EditForm.jsx';
+import ImportForm from './components/import_form/ImportForm.jsx';
 
 function App() {
     const [accounts, setAccounts] = useState([]);
     const [elmIndex, setElmIndex] = useState(null);
-    const [dispalyForm, setDispalyForm] = useState(false);
+    const [account, setAccount] = useState(null);
+    const [dispalyForm, setDispalyForm] = useState(null);
     const [updateAccounts, setUpdateAccounts] = useState(false);
-    const { register, handleSubmit, formState: { errors }, reset, control } = useForm();
-    const nameWatcher = useWatch({
-        control,
-        name: 'name',
-        defaultValue: null
-    });
+    const [keywords, setKeywords] = useState('');
+
+    const EDIT_ACCOUNT_ACTION = 1;
+    const IMPORT_ACCOUNTS_ACTION = 2;
     
     useEffect(() => {
         (async ()=>{
@@ -33,25 +34,27 @@ function App() {
         setAccounts(result);
     }
 
-    const setForm = (index = null) => {
+    const setForm = (action = null, index = null) => {
         setElmIndex(index);
-        reset({
-            name: index === null ? null : accounts[index].name,
-            email: index === null ? null : accounts[index].email,
-            password: index === null ? null : accounts[index].password,
-            link: index === null ? null : accounts[index].link
-        });
-        setDispalyForm(true);
+        setAccount(index === null ? null : accounts[index]);
+        setDispalyForm(action);
     }
 
-    const onSubmit = (data) => {
+    const isNameExisted = (nameWatcher) => {
+        for (let index  = 0; index < accounts.length; index++) {
+            if (accounts[index].name === nameWatcher && elmIndex !== index)return true;
+        }
+        return false;
+    }
+
+    const editAccount = (data) => {
         setUpdateAccounts(true);
         if (elmIndex === null) {
             setAccounts([...accounts, data]);
-            setDispalyForm(false);
+            setForm();
         } else {
             setAccounts(accounts.map((item, index) => {
-                if (index === elmIndex)return data;
+                if (index === elmIndex)return {...item, ...data};
                 else return item;
             }))
         }
@@ -67,19 +70,8 @@ function App() {
         setAccounts(accounts.filter((_, i) => i !== index))
     }
 
-    const isNameExisted = () => {
-        for (let index  = 0; index < accounts.length; index++) {
-            if (accounts[index].name === nameWatcher && elmIndex !== index)return true;
-        }
-        return false;
-    }
-
     const navigateToUrl = async (index) => {
-        const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-        const response = await chrome.tabs.sendMessage(tab.id, {
-            action: "navigate",
-            data: accounts[index].link
-        });
+        chrome.tabs.create({ url: accounts[index].link });
     }
 
     const doLogin = async (index) => {
@@ -90,77 +82,71 @@ function App() {
         });
     }
 
+    const getIndexById = (id) => {
+        return accounts.findIndex((account) => account.id === id);
+    }
+
+    const exportData = () => {
+        let data = headers.join(';') + '\n';
+        accounts.forEach((account) => {
+            headers.forEach((title, index) => {
+                data += account[title];
+                if (index < headers.length - 1)data += ';';
+            });
+            data += '\n';
+        });
+
+        createCSV(data, 'logins.csv');
+    }
+
+    const importData = (data) => {
+        setUpdateAccounts(true);
+        setAccounts([...accounts, ...data]);
+        alert('Importé');
+        setForm();
+    }
+
     return (
         <div id="app" className="p-3 pb-1 hero-width-500">
-            {dispalyForm === true &&
-                <section className="container-fluid mb-3">
-                    <form className="row" onSubmit={handleSubmit(onSubmit)}>
-                        <div className="col-12 d-flex justify-content-between">
-                            <h4>Editer un compter</h4>
-                            <i className="bi bi-x-lg cursor-pointer text-danger" onClick={()=>{setDispalyForm(false);setElmIndex(null)}}></i>
-                        </div>
-                        <div className="col-12 mb-2">
-                            <label for="name" class="form-label">Nom*</label>
-                            <input 
-                                class="form-control form-control-sm" 
-                                type="text"
-                                id="name" 
-                                name="name"
-                                {...register("name", { required: { value: true, message: 'Le champ est obligatoire'}})}
-                            />
-                            {errors.name?.type === 'required' && <div className="alert alert-danger">{errors.name.message}</div>}
-                            {isNameExisted() === true && 
-                                <div className="alert alert-warning">
-                                    Il existe un account avec ce nom
-                                </div>
-                            }
-                        </div>
-                        <div className="col-6 mb-2">
-                            <label for="email" class="form-label">Mail*</label>
-                            <input 
-                                class="form-control form-control-sm" 
-                                type="email"
-                                id="email" 
-                                name="email"
-                                {...register("email", { required: { value: true, message: 'Le champ est obligatoire'}})}
-                            />
-                            {errors.name?.type === 'required' && <div className="alert alert-danger">{errors.email.message}</div>}
-                        </div>
-                        <div className="col-6 mb-2">
-                            <label for="password" class="form-label">Mot de passe*</label>
-                            <input 
-                                class="form-control form-control-sm" 
-                                type="password"
-                                id="password" 
-                                name="password"
-                                {...register("password", { required: { value: true, message: 'Le champ est obligatoire'}})}
-                            />
-                            {errors.password?.type === 'required' && <div className="alert alert-danger">{errors.password.message}</div>}
-                        </div>
-                        <div className="col-12 mb-2">
-                            <label for="link" class="form-label">Page de login</label>
-                            <input 
-                                class="form-control form-control-sm" 
-                                type="text"
-                                id="link" 
-                                name="link"
-                                {...register("link")}
-                            />
-                        </div>
-                        <div className="col-12 text-center">
-                            <button type='submit' className="btn btn-primary btn-sm">Envoyer</button>
-                        </div>
-                    </form>
-                </section>
+            {dispalyForm === EDIT_ACCOUNT_ACTION &&
+                <EditForm 
+                    account={account}
+                    isNameExisted={isNameExisted}
+                    setForm={setForm}
+                    editAccount={editAccount}
+                />
+            }
+            {dispalyForm === IMPORT_ACCOUNTS_ACTION &&
+                <ImportForm 
+                    setForm={setForm}
+                    importData={importData}
+                />
             }
 
+            <h5 className="text-center mb-3">Que les jolies blondes de 18 ans te bénissent!</h5>
+
+            <section className="d-flex align-items-center mb-2 ps-1">
+                <i class="bi bi-download pointer me-3" onClick={exportData}></i>
+                <i class="bi bi-upload pointer" onClick={() => setForm(IMPORT_ACCOUNTS_ACTION)}></i>
+            </section>
+            <section className="mb-2">
+                <input 
+                    class="form-control form-control-sm" 
+                    type="search"
+                    id="keywords" 
+                    name="keywords"
+                    placeholder='Site, Identifiant'
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)} 
+                />
+            </section>
             <section id="list-accounts">
                 <table className="table table-striped table-hover">
                     <thead className="table-primary">
                         <tr>
                             <th scope="col">
                                 Site
-                                <i class="bi bi-plus-circle-fill cursor-pointer ms-1" onClick={()=>setForm()}></i>
+                                <i class="bi bi-plus-circle-fill cursor-pointer ms-1" onClick={()=>setForm(EDIT_ACCOUNT_ACTION)}></i>
                             </th>
                             <th scope="col">Identifiant</th>
                             <th scope="col">Login</th>
@@ -169,25 +155,29 @@ function App() {
                     </thead>
                     <tbody>
                         {
-                            accounts.map((account, index) => (
+                            accounts
+                            .filter((account) => {
+                                return account.name?.toLowerCase().includes(keywords.toLowerCase()) || account.email?.toLowerCase().includes(keywords.toLowerCase())
+                            })
+                            .map((account, index) => (
                                 <tr key={index}>
                                     <th scope="row">
-                                        {account.link === null
+                                        {account.link === null || account.link === ''
                                             ?<span>{account.name}</span>
                                             :<span 
                                                 className="btn btn-link"  
-                                                onClick={()=>navigateToUrl(index)}>
+                                                onClick={()=>navigateToUrl(getIndexById(account.id))}>
                                                     {account.name}
                                              </span>
                                         }
                                     </th>
                                     <td>{account.email}</td>
                                     <td>
-                                        <i className="bi bi-door-open-fill cursor-pointer hover:color-blue" onClick={()=>doLogin(index)}></i>
+                                        <i className="bi bi-door-open-fill cursor-pointer hover:color-blue" onClick={()=>doLogin(getIndexById(account.id))}></i>
                                     </td>
                                     <td>
-                                        <i className="bi bi-pencil-fill cursor-pointer me-3 hover:color-green" onClick={()=>setForm(index)}></i>
-                                        <i className="bi bi-trash3-fill cursor-pointer hover:color-red" onClick={()=>deleteAccount(index)}></i>
+                                        <i className="bi bi-pencil-fill cursor-pointer me-3 hover:color-green" onClick={()=>setForm(EDIT_ACCOUNT_ACTION, getIndexById(account.id))}></i>
+                                        <i className="bi bi-trash3-fill cursor-pointer hover:color-red" onClick={()=>deleteAccount(getIndexById(account.id))}></i>
                                     </td>
                                 </tr>
                             ))
