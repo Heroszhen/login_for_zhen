@@ -10,7 +10,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             form = document.querySelector('form');
             searchDom(form, ['email', 'login', 'username'], request.data.email);
             searchDom(form, ['password'], request.data.password);
-            searchDom(form, ['submit'], null, false)?.click()
+            searchDom(form, ['submit'], null, false)?.click();
         }
     }
    
@@ -26,22 +26,41 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
  * @returns {HTMLElement | null}
  */
 function searchDom(parentDom, keywords, value = null, isInput = true) {
-    if (parentDom === null)parentDom.querySelector('body');
+    if (parentDom === null)parentDom = document.querySelector('body');
 
     const attributes = ['type', 'id', 'name', 'role'];
-    let elements, query;
+    let element = null, query;
     for(let entry of keywords) {
         for (let attribute of attributes) {
             query = `[${attribute}*=${entry}]`;
             if (isInput)query = 'input' + query;
-            elements = parentDom.querySelectorAll(query);
-            if (elements.length > 0) {
-                const dom = elements[0];
-                if (value !== null)dom.value = value;
-                return dom;
+            element = parentDom.querySelector(query) ?? null;
+            if (element) {
+                if (value !== null){
+                    element.value = value;
+                    setNativeValue(element, value);
+                }
+                return element;
             }
         }
     }
 
-    return null;
+    return element;
+}
+
+
+function setNativeValue(el, value) {
+  const proto = el instanceof HTMLInputElement
+    ? HTMLInputElement.prototype
+    : el instanceof HTMLTextAreaElement
+    ? HTMLTextAreaElement.prototype
+    : HTMLElement.prototype;
+
+  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+  if (!setter) { el.value = value; return; }
+  setter.call(el, value);
+
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+  el.dispatchEvent(new Event('blur', { bubbles: true }));
 }
